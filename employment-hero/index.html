@@ -1,0 +1,45 @@
+<!doctype html>
+<!--
+  COMMAND CENTRE'S EMPLOYMENT HERO CALLBACK PAGE (1.1.103, fb_847691c8277d).
+
+  Publish this one file at a public https:// address, then register that address, exactly, as the redirect address of
+  Command Centre's application in Employment Hero's developer portal, and enter the same address in Command Centre under
+  Administration > Integrations > Employment Hero > Callback page address. Employment Hero refuses a localhost redirect;
+  this page is the step between Employment Hero and Command Centre on your computer.
+
+  WHAT IT DOES: it reads only the code and the state from its own address and sends the browser straight back to Command
+  Centre on this computer, at http://localhost:4173/api/employment-hero/callback?code=...&state=... (the state Command
+  Centre hands out begins with its port, "4173-...", and a different port there is used instead). Nothing else is read,
+  nothing is stored, nothing is loaded from anywhere else, and nothing is sent anywhere but this computer.
+
+  WHY IT IS SAFE TO PUBLISH: the code is useless on its own. Command Centre exchanges it for access only with its client
+  secret and the PKCE code verifier made for that one attempt, and neither ever leaves the computer Command Centre runs on.
+  The Content-Security-Policy below lets this page run its own script and nothing else; if the script is changed, its
+  sha256 in the policy must be changed with it (.audit/_ehconnect_unit.mjs checks that they agree).
+-->
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-iCx67KECI7YKDtvlKeDtnrGIiX7CkPT6GCRzYHr2yss='; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Returning to Command Centre</title>
+</head>
+<body style="font:16px/1.5 -apple-system,'Segoe UI',sans-serif;max-width:560px;margin:80px auto;padding:0 20px;color:#1d2433;background:#ffffff">
+<p>Returning you to Command Centre…</p>
+<p><a id="back" href="http://localhost:4173/api/employment-hero/callback">If nothing happens, press here to return to Command Centre.</a></p>
+<script>
+(function () {
+  var q = new URLSearchParams(window.location.search), ok = /^[A-Za-z0-9._~-]{1,512}$/;
+  var code = q.get('code') || '', state = q.get('state') || '';
+  var m = /^(\d{4,5})-/.exec(state), port = m && Number(m[1]) >= 1024 && Number(m[1]) <= 65535 ? m[1] : '4173';
+  var out = new URLSearchParams();
+  if (ok.test(code)) out.set('code', code);
+  if (ok.test(state)) out.set('state', state);
+  var to = 'http://localhost:' + port + '/api/employment-hero/callback' + (out.toString() ? '?' + out.toString() : '');
+  document.getElementById('back').setAttribute('href', to);
+  window.location.replace(to);
+})();
+</script>
+</body>
+</html>
